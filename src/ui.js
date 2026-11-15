@@ -1,152 +1,91 @@
-/* AI assistance: Codex wrote the original UI; Claude Code supplied the design/specification. */
-import { CONFIG, warningSeconds } from './config.js';
-import { eventDate, travelDays, speedLabel, sizeLabel, encounterLabel, protectionCost, reserveTarget } from './data.js';
-
+/* AI assistance: Codex UI implementation; initial Claude Code spec, revised by the user's simplicity and sound direction. */
+import { CONFIG } from './config.js?v=2';
+import { eventDate, travelDays, speedLabel, sizeLabel, protectionCost, encounterLabel } from './data.js?v=2';
+import { icon } from './icons.js?v=2';
+import { Dialogue } from './dialogue.js?v=2';
 const escape = value => String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 const number = value => Math.max(0, Math.round(value));
 const $ = id => document.getElementById(id);
-
-const STORIES = [
-  { text: `Hi, Commander! I'm <strong>Pip</strong>, the robot at Red Base. Three astronauts live here, on Mars. You're in charge now!`, speak: "Hi, Commander! I'm Pip, the robot at Red Base. Three astronauts live here, on Mars. You're in charge now!" },
-  { text: `Sometimes the Sun sends out a huge cloud of fast-moving bits. Earth has a big <strong>magnetic shield</strong>. Mars does not. NASA watches the Sun to help crews prepare.`, speak: 'Sometimes the Sun sends out a huge cloud of fast-moving bits. Earth has a big magnetic shield. Mars does not. NASA watches the Sun to help crews prepare.' },
-  { text: `Our <strong>imaginary shield</strong> uses the same battery as the air machine. Too much shield means less air! Real crews use radiation shelters.`, speak: 'Our imaginary shield uses the same battery as the air machine. Too much shield means less air! Real crews use radiation shelters.' },
-  { text: `NASA recorded every Sun storm in this game. Its computers <strong>predicted trips near Mars</strong>. Get through 8 waves, and do science to earn stars!`, speak: 'NASA recorded every Sun storm in this game. Its computers predicted trips near Mars. Get through eight waves, and do science to earn stars!' },
-];
+const STORIES = ["Hey, Commander. I'm Pip. Welcome to Red Base.",'Sun storms are coming. Our crew needs you.','Shield the base. Save 20 power for air.','Eight storms. Do science. Bring everyone home.'];
 
 export class GameUI {
-  constructor(game, actions) {
-    this.game = game; this.actions = actions; this.key = ''; this.speechText = '';
-    this.previousMeters = {power:70,air:100,crew:100};
-    this.root = $('panel-root'); this.main = $('game'); this.shieldButton = $('shield-button');
-    $('pause-button').addEventListener('click', () => this.game.pause());
-    $('about-button').addEventListener('click', () => this.openAbout());
-    $('close-about').addEventListener('click', () => this.closeAbout());
-    $('about-done').addEventListener('click', () => this.closeAbout());
-    $('about-dialog').addEventListener('click', event => { if(event.target === $('about-dialog')) this.closeAbout(); });
-    $('about-dialog').addEventListener('close', () => { if(this.aboutPaused){this.aboutPaused=false;this.game.resume();} });
-    this.root.addEventListener('click', event => {
+  constructor(game, actions, audio) {
+    this.game=game;this.actions=actions;this.audio=audio;this.dialogue=new Dialogue(audio);this.key='';this.lastFlash={};
+    this.root=$('panel-root');this.main=$('game');this.shieldButton=$('shield-button');this.previousMeters={power:70,air:100,crew:100};
+    document.querySelectorAll('[data-icon]').forEach(el=>el.innerHTML=icon(el.dataset.icon));
+    $('pause-button').innerHTML=icon('pause');$('close-about').innerHTML=icon('close');
+    $('pause-button').addEventListener('click',()=>{this.audio.click();this.game.pause();});
+    $('sound-button').addEventListener('click',()=>this.actions.toggleSound());
+    $('about-button').addEventListener('click',()=>this.openAbout());$('close-about').addEventListener('click',()=>this.closeAbout());$('about-done').addEventListener('click',()=>this.closeAbout());
+    $('about-dialog').addEventListener('close',()=>{if(this.aboutPaused){this.aboutPaused=false;this.game.resume();}});
+    this.root.addEventListener('click',event=>{
+      if(event.target.closest('[data-dialogue]')){this.dialogue.finish();return;}
       const button=event.target.closest('button[data-action]');if(!button||button.disabled)return;
-      const action=button.dataset.action;
-      if(action==='speak'){this.speak();return;}
-      if(action!=='speak')this.cancelSpeech();
-      if(action==='play')this.actions.play();
-      if(action==='story')this.actions.play(true);
-      if(action==='tap')this.actions.toggleTap();
-      if(action==='next-story')this.actions.nextStory();
-      if(action==='skip-story')this.actions.skipStory();
-      if(action==='ready')this.game.ready();
-      if(action==='choice')this.game.choose(button.dataset.choice);
-      if(action==='replay')this.actions.replay();
-      if(action==='resume')this.game.resume();
-      if(action==='home')this.game.showStart();
-      if(action==='retry')this.actions.retry();
+      this.audio.unlock();this.audio.click();this.dialogue.cancel();const action=button.dataset.action;
+      if(action==='play')this.actions.play();if(action==='story')this.actions.play(true);if(action==='tap')this.actions.toggleTap();
+      if(action==='next-story')this.actions.nextStory();if(action==='skip-story')this.actions.skipStory();if(action==='ready')this.game.ready();
+      if(action==='choice')this.game.choose(button.dataset.choice);if(action==='replay')this.actions.replay();if(action==='resume')this.game.resume();if(action==='home')this.game.showStart();
       this.update(true);
     });
   }
-
-  setLoading(error = '') {
-    $('hud').hidden=true;$('mission-tools').hidden=true;$('shield-button').hidden=true;$('storm-tag').hidden=true;$('countdown').hidden=true;
-    this.root.innerHTML=`<div class="shade"><section class="card" role="dialog" aria-labelledby="loading-title"><h2 id="loading-title">${error?'A little trouble loading':'Getting Red Base ready…'}</h2><p>${error?'We could not load the saved storm records.':'Opening the saved NASA storm records.'}</p>${error?`<p class="error-code">${escape(error)}</p><button class="button primary" data-action="retry" type="button">Try again</button>`:''}</section></div>`;
+  cancelDialogue(){this.dialogue.cancel();}
+  openAbout(){this.dialogue.finish();this.aboutPaused=this.game.isActive;if(this.aboutPaused)this.game.pause();this.game.releaseShield();$('about-dialog').showModal();this.update();}
+  closeAbout(){$('about-dialog').close();}
+  update(force=false){
+    const s=this.game.state;this.main.dataset.phase=s.phase;this.main.dataset.paused=s.paused;
+    const key=[s.phase,s.paused,s.index,s.storyPanel,s.practice,this.actions.getTap()].join('|');
+    if(force||key!==this.key){this.key=key;this.renderPanel();}this.updateHUD();
   }
-
-  speechButton() { return 'speechSynthesis' in window ? '<div class="speech-row"><button class="button secondary" type="button" data-action="speak">🔊 Read to me</button></div>' : ''; }
-  cancelSpeech() { window.speechSynthesis?.cancel(); }
-  speak() {
-    if (!('speechSynthesis' in window) || !this.speechText) return;
-    this.cancelSpeech();
-    const utterance = new SpeechSynthesisUtterance(this.speechText);
-    utterance.lang='en-US';utterance.rate=CONFIG.speechRate;
-    const voice=window.speechSynthesis.getVoices().find(voice=>voice.localService&&voice.lang.startsWith('en'));
-    if(voice)utterance.voice=voice;
-    window.speechSynthesis.speak(utterance);
-  }
-
-  openAbout() {
-    this.cancelSpeech();this.aboutPaused=this.game.isActive;
-    if(this.aboutPaused)this.game.pause();
-    this.game.releaseShield();$('about-dialog').showModal();this.update();
-  }
-  closeAbout() { $('about-dialog').close(); }
-
-  update(force=false) {
-    const s=this.game.state;
-    this.main.dataset.phase=s.phase;
-    const tap=this.actions.getTap();
-    const key=[s.phase,s.paused,s.index,s.storyPanel,s.practice,tap].join('|');
-    if(force||key!==this.key){this.key=key;this.renderPanel();}
-    this.updateHUD();
-  }
-
-  renderPanel() {
-    const s=this.game.state,e=this.game.event;
-    let html='',speech='';
+  pipLine(){return '<div class="pip-line"><span class="pip-badge">Pip</span><p data-dialogue class="dialogue"></p></div>';}
+  renderPanel(){
+    const s=this.game.state,e=this.game.event;let html='',line='';
     if(s.paused){
-      html=`<div class="shade"><section class="card" role="dialog" aria-labelledby="pause-title"><span class="eyebrow">Red Base is waiting</span><h2 id="pause-title">Take your time.</h2><p>The mission clock is paused.</p><p class="small">Your shield is off. Press it again when you're ready.</p><div class="button-row"><button type="button" class="button primary" data-action="resume">Keep going ▶</button><button type="button" class="button secondary" data-action="home">Back to start</button></div></section></div>`;
+      html=`<div class="shade"><section class="card pause-card" role="dialog" aria-labelledby="pause-title"><div class="card-symbol">${icon('pause')}</div><h2 id="pause-title">Take a breath.</h2><p class="support">The mission can wait.</p><button class="button primary wide" type="button" data-action="resume">Keep going ${icon('play')}</button><div class="quiet-actions"><button type="button" data-action="tap" aria-pressed="${this.actions.getTap()}">${icon('touch')} Tap mode ${this.actions.getTap()?'on':'off'}</button><button type="button" data-action="home">Back to start</button></div></section></div>`;
     }else if(s.phase==='start'){
-      html=`<section class="start-screen" aria-label="Start your mission"><div class="start-utilities"><button class="utility" type="button" data-action="story">❔ Story</button><button class="utility" type="button" data-action="tap" aria-pressed="${this.actions.getTap()}">✋ Tap mode: ${this.actions.getTap()?'on':'off'}</button></div><header class="brand"><h1>Storm <span>Waves</span></h1><p>Keep your Mars crew safe.<br>Save power for air and science.</p></header><div class="how"><span>☀️ A wave is coming</span><span>🛡️ Hold to shield</span><span>⚡ Save your power</span></div><button class="play-button" type="button" data-action="play">Play</button><div class="start-subtitle">A one-button game · real NASA storm records</div></section>`;
+      html=`<section class="start-screen"><div class="start-utilities"><button class="text-button" type="button" data-action="story">${icon('help','',18)} Story</button><button class="text-button" type="button" data-action="tap" aria-pressed="${this.actions.getTap()}">${icon('touch','',18)} Tap mode ${this.actions.getTap()?'on':'off'}</button></div><header class="brand"><span class="brand-kicker">A little Mars mission</span><h1>Storm <span>Waves</span></h1><p>Small crew. Big universe.</p></header><div class="start-action"><button class="button primary play-button" type="button" data-action="play">Let's play ${icon('arrow')}</button><span>Eight storms. One shared battery.</span></div></section>`;
     }else if(s.phase==='story'){
-      const story=STORIES[s.storyPanel];speech=story.speak;
-      html=`<section class="story-screen ${s.storyPanel===1?'lesson':s.storyPanel===2?'power-story':''}" aria-label="Pip's story, panel ${s.storyPanel+1} of 4"><button class="utility story-skip" type="button" data-action="skip-story">Skip story</button><div class="story-bubble"><span class="who">Pip · your base robot</span><p>${story.text}</p>${this.speechButton()}</div><div class="story-dots" aria-label="Panel ${s.storyPanel+1} of 4">${[0,1,2,3].map(i=>i===s.storyPanel?'<b>●</b>':'○').join('')}</div><button class="button primary story-next" type="button" data-action="next-story">${s.storyPanel===3?"Let's go! ▶":'Next ▶'}</button></section>`;
+      line=STORIES[s.storyPanel];html=`<div class="story-screen"><button class="text-button story-skip" type="button" data-action="skip-story">Skip</button><div class="shade"><section class="card story-card"><div class="story-progress" aria-label="Story ${s.storyPanel+1} of 4">${STORIES.map((_,i)=>`<i class="${i<=s.storyPanel?'done':''}"></i>`).join('')}</div>${this.pipLine()}<button class="button primary story-next" type="button" data-action="next-story">${s.storyPanel===3?"Let's try it":'Next'} ${icon('arrow')}</button></section></div></div>`;
     }else if(s.phase==='tutorial'){
-      speech="These three bars are your crew's needs. Keep all of them above zero. This is a practice wave. Your crew is safe.";
-      html=`<div class="tutorial-shade"></div><section class="tutorial-tip" role="dialog" aria-labelledby="tutorial-title"><p id="tutorial-title">These three bars are your crew's needs.<br>Keep them above zero.</p><p class="small">Practice first. The crew is safe!</p><button class="button primary" type="button" data-action="ready">Got it</button>${this.speechButton()}</section>`;
+      line='Power. Air. Crew. Keep them above zero.';html=`<div class="shade"><section class="card tutorial-card" role="dialog" aria-labelledby="tutorial-title"><span class="eyebrow">A safe practice</span><h2 id="tutorial-title">You've got this.</h2>${this.pipLine()}<button class="button primary wide" type="button" data-action="ready">Try the shield ${icon('shield')}</button></section></div>`;
     }else if(s.phase==='intro'){
-      const comparison=Math.round(CONFIG.comparisonDistanceKm/e.speedKmS*2)/2;
-      const prediction=e.marsGlancingBlow?'NASA’s model predicted a glancing encounter near Mars.':'NASA’s model predicted a direct encounter near Mars.';
-      speech=`Wave ${s.index+1} of ${s.run.length}. NASA spotted this storm on ${eventDate(e)}. Speed: ${Math.round(e.speedKmS)} kilometers per second. ${prediction} In our game a glancing wave is gentler. Your shield and the air machine share one battery. Ready?`;
-      html=`<div class="shade"><section class="card" role="dialog" aria-labelledby="intro-title"><span class="eyebrow">☀️ Wave ${s.index+1} of ${s.run.length}</span><h2 id="intro-title">NASA spotted this storm<br>on ${escape(eventDate(e))}.</h2><p><strong>${Math.round(e.speedKmS)} km/s.</strong> About the distance from Manila to Davao in ${comparison} ${comparison===1?'second':'seconds'}!</p><p class="small">${prediction}<br>In this game, a glancing wave hits more gently.</p>${s.index===0?'<div class="fact">Get through <strong>8 waves</strong>. Do science to earn ⭐.<br>Keep at least <strong>20 power</strong> for the air machine.</div>':''}<div class="fact science-note">Real storm record · predicted Mars encounter.<br>Our shield and meter numbers are game rules.</div>${this.speechButton()}<button class="button primary" type="button" data-action="ready">Ready! ▶</button></section></div>`;
+      line=s.index===0?'Wait until it is close. Then hold your shield.':e.speedKmS>=700?'This one is quick. Stay sharp.':'A little breathing room. Let the battery charge.';
+      html=`<div class="shade"><section class="card intro-card" role="dialog" aria-labelledby="intro-title"><span class="eyebrow">Wave ${s.index+1} of 8</span><div class="intro-heading"><div class="card-symbol sun-symbol">${icon('sun')}</div><div><h2 id="intro-title">Incoming.</h2><p class="record-date">${escape(eventDate(e))} · NASA DONKI</p></div></div><div class="storm-stats"><span><strong>${Math.round(e.speedKmS)}</strong><small>km/s</small></span><span>${icon(e.marsGlancingBlow?'planet':'shield')}<small>${e.marsGlancingBlow?'Glancing':'Direct'} model</small></span><span>${icon('sun')}<small>${sizeLabel(e)} wave</small></span></div>${this.pipLine()}<button class="button primary wide" type="button" data-action="ready">Ready ${icon('arrow')}</button></section></div>`;
     }else if(s.phase==='debrief'){
-      const result=s.lastResult;
-      const heading=result.quality==='great'?'Great timing!':result.quality==='early'?'Safe, but early.':'The wave got through.';
-      let explanation=result.quality==='great'?'Your shield covered the wave.':result.quality==='early'?`Your shield was up ${result.earlySeconds.toFixed(1)} seconds early. That used about ${Math.round(result.earlySeconds*CONFIG.shieldPowerPerSecond)} extra power.`:s.practice?'The crew is safe in practice. Try raising the shield a little sooner.':`The crew lost ${number(result.crewLost)} health. Try raising the shield a little sooner.`;
-      const next=s.practice?this.game.event:this.game.nextEvent;
-      const supplies=`<div class="supplies" aria-label="Supplies before your choice"><span>⚡ Power <strong>${number(s.power)}</strong></span><span>💨 Air <strong>${number(s.air)}</strong></span><span>♥ Crew <strong>${number(s.crew)}</strong></span></div>`;
-      const forecast=supplies+(next?`<div class="forecast"><strong>Next wave: ☀️ ${escape(eventDate(next))}</strong><div class="chips"><span class="chip">${escape(speedLabel(next))}</span><span class="chip">${escape(sizeLabel(next))}</span><span class="chip">${next.marsGlancingBlow?'↗ Glancing model':'→ Direct model'}</span></div><div class="target">Game plan: the next shield needs about <strong>${protectionCost(next)} power</strong>. Aim for <strong>${reserveTarget(next)} before it hits</strong>, including 20 for air. Solar panels recharge while you wait.</div></div>`:'');
-      const choice=(name,icon,title,gain,cost,disabled)=>`<button type="button" class="choice" data-action="choice" data-choice="${name}" ${disabled?'disabled':''}><span class="icon" aria-hidden="true">${icon}</span><span>${title}</span><small><span class="gain">${gain}</span><br><span class="cost">${disabled?'Not enough power':cost}</span></small></button>`;
-      speech=`${heading} ${explanation} Your shield used about ${number(result.powerSpent)} power. You have ${number(s.power)} power, ${number(s.air)} air, and ${number(s.crew)} crew health. NASA's model estimated about ${travelDays(e)} days to reach Mars. Our game shortened that trip to ${Math.round(this.game.warningDuration)} seconds. ${next?`The next wave is ${speedLabel(next)}, ${sizeLabel(next)}, and needs about ${protectionCost(next)} power for its shield. `:''}What will the crew do now? Science earns one star and uses fifteen power. Rest heals twenty crew and uses fifteen power. Charge adds twenty five power and earns no star.`;
-      html=`<div class="shade"><section class="card debrief" role="dialog" aria-labelledby="debrief-title"><span class="eyebrow">${s.practice?'Practice complete · crew safe':`Wave ${s.index+1} complete`}</span><h2 id="debrief-title">${heading}</h2><p>${explanation} Your shield used about <strong>${number(result.powerSpent)} power</strong>.</p>${result.airLost>1?`<p class="small">Air fell by ${number(result.airLost)} because power went below the 20-unit reserve.</p>`:''}<div class="fact">NASA’s model estimated about <strong>${travelDays(e)} days</strong> to reach Mars. Our game shortened the trip to <strong>${Math.round(this.game.warningDuration)} seconds</strong>.</div>${forecast}<p><strong>What will the crew do now?</strong></p>${s.practice?'<p class="small">Every choice has a cost. Try one!<br>Your real mission starts next with fresh supplies.</p>':''}<div class="choices">${choice('science','🔬','Do science','Get 1 star','Uses 15 power',s.power<CONFIG.sciencePower)}${choice('rest','🛌','Rest the crew','Heal crew 20','Uses 15 power',s.power<CONFIG.restPower)}${choice('charge','🔋','Charge up','Gain 25 power','No star',false)}</div><p class="small">Keyboard: Space to choose · Enter to confirm</p>${this.speechButton()}</section></div>`;
+      const result=s.lastResult,good=result.quality==='great',early=result.quality==='early';
+      const title=good?'Nice timing!':early?'Safe. A little early.':s.practice?'Try that again.':'That one got through.';
+      const next=s.practice?null:this.game.nextEvent;
+      const note=good?`${number(result.powerSpent)} power used.`:early?`${number(result.earlySeconds*CONFIG.shieldPowerPerSecond)} extra power used.`:s.practice?'Practice keeps the crew safe.':`${number(result.crewLost)} crew health lost.`;
+      const forecast=next?`<div class="next-wave"><div><span class="eyebrow">Next wave</span><strong>${speedLabel(next).replace(' speed','')} · ${next.halfAngleDeg>=35?'Wide':next.halfAngleDeg<20?'Narrow':'Medium'}${next.marsGlancingBlow?' · Glancing':''}</strong></div><span class="next-cost">${icon('shield','',17)} ${protectionCost(next)} <small>power</small></span></div>`:'';
+      const choice=(name,symbol,title,reward,cost,disabled=false)=>`<button class="choice ${name}" type="button" data-action="choice" data-choice="${name}" ${disabled?'disabled':''} aria-label="${title}: ${reward}; ${disabled?'not enough power':cost}"><span class="choice-icon">${icon(symbol)}</span><strong>${title}</strong><span class="choice-gain">${reward}</span><small>${disabled?'Low power':cost}</small></button>`;
+      line=s.practice?"Pick a job. We'll refill supplies.":s.air<65?'Air is low. Time to charge.':'';
+      html=`<div class="shade"><section class="card debrief" role="dialog" aria-labelledby="debrief-title"><div class="result-heading"><div class="card-symbol ${good?'success-symbol':'warm-symbol'}">${icon(good?'check':early?'shield':'heart')}</div><div><span class="eyebrow">${s.practice?'Practice complete':`Wave ${s.index+1} complete`}</span><h2 id="debrief-title">${title}</h2><p class="support">${note}</p></div></div>${forecast}<div class="reserve-note">${icon('bolt','',16)} Keep 20 power for air.</div>${line?this.pipLine():''}<div class="choices">${choice('science','flask','Science','+1 star','−15 power',s.power<CONFIG.sciencePower)}${choice('rest','rest','Rest','+20 crew','−15 power',s.power<CONFIG.restPower)}${choice('charge','battery','Charge','+25 power','No star')}</div><details class="wave-fact"><summary>Storm record ${icon('book','',14)}</summary><p>NASA's model: about ${travelDays(e)} days to Mars. Our game: ${Math.round(this.game.warningDuration)} seconds. ${escape(encounterLabel(e))}.</p><a href="${escape(e.link)}" target="_blank" rel="noopener noreferrer">Open NASA record</a></details></section></div>`;
     }else if(s.phase==='report'){
-      const won=s.outcome==='won';
-      const heading=won?`Mission complete, ${this.game.rank}!`:'Time for the safe room.';
-      const pip=won?'Red Base made it through storm season! NASA scientists watch the Sun to help keep real astronauts safe.':"The crew went to the safe room. Let's try a different plan!";
-      speech=`${heading} ${pip} You got through ${s.completed} waves and did ${s.stars} science jobs. The shield and the air machine share one battery. Real mission planners balance protection, power, and science too.`;
-      html=`<div class="shade"><section class="card report" role="dialog" aria-labelledby="report-title"><span class="eyebrow">Red Base · mission report</span><h2 id="report-title">${heading}</h2><div class="stars-row" aria-label="${s.stars} of 8 stars">${Array.from({length:8},(_,i)=>i<s.stars?'⭐':'<span class="empty">⭐</span>').join('')}</div>${!won?`<p>The crew ran low on <strong>${s.reason==='air'?'air':'health'}</strong>.</p>`:''}<p>You got through <strong>${s.completed} waves</strong><br>and did <strong>${s.stars} science ${s.stars===1?'job':'jobs'}</strong>.</p><p class="small">Pip: “${pip}”</p><div class="fact">Protection, power, and science share limited resources. Real mission planners make trade-offs too.</div><details class="storm-list"><summary>📋 See the 8 NASA storm records</summary><ol>${s.run.map((storm,i)=>`<li><a href="${escape(storm.link)}" target="_blank" rel="noopener noreferrer">${escape(eventDate(storm))} ↗</a> · ${Math.round(storm.speedKmS)} km/s · ${sizeLabel(storm)} · ${encounterLabel(storm)}${i>=s.completed?' · not completed':''}</li>`).join('')}</ol><p class="small">Dates are UTC. Encounter descriptions are model predictions.</p></details>${this.speechButton()}<div class="button-row"><button class="button primary" type="button" data-action="replay">Play again ▶</button><button class="button secondary" type="button" data-action="home">Start screen</button></div><p class="small">NASA DONKI · ${escape(eventDate(s.run[0]))} to ${escape(eventDate(s.run.at(-1)))}<br>Snapshot saved ${CONFIG.capturedLabel} · <a href="${CONFIG.donkiUrl}" target="_blank" rel="noopener noreferrer">See NASA’s records ↗</a></p></section></div>`;
+      const won=s.outcome==='won';line=won?'Red Base made it. Nice work, Commander.':'Everyone is in the safe room. Want another go?';
+      html=`<div class="shade"><section class="card report" role="dialog" aria-labelledby="report-title"><div class="card-symbol report-symbol">${icon(won?'star':'shield')}</div><span class="eyebrow">${won?this.game.rank:'Mission paused'}</span><h2 id="report-title">${won?'Home safe.':'A new plan?'}</h2><div class="stars-row" aria-label="${s.stars} of 8 stars">${Array.from({length:8},(_,i)=>icon('star',i<s.stars?'earned':'empty')).join('')}</div><p class="support">${s.completed} waves. ${s.stars} science jobs.${won?'':` Low ${s.reason==='air'?'air':'crew health'}.`}</p>${this.pipLine()}<button class="button primary wide" type="button" data-action="replay">Play again ${icon('replay')}</button><details class="storm-list"><summary>The 8 NASA storm records ${icon('book','',16)}</summary><ol>${s.run.map((storm,i)=>`<li><a href="${escape(storm.link)}" target="_blank" rel="noopener noreferrer">${escape(eventDate(storm))}</a> · ${Math.round(storm.speedKmS)} km/s<br>${escape(encounterLabel(storm))}${i>=s.completed?' · not completed':''}</li>`).join('')}</ol><p>Dates are UTC. Mars encounters are predictions.</p></details></section></div>`;
     }
-    this.speechText=speech;
-    this.root.innerHTML=html;
-    this.cancelSpeech();
-    $('announcer').textContent=s.paused?'Game paused.':s.phase==='warning'?(s.practice?'Practice wave. Your crew is safe.':`Wave ${s.index+1}. Watch for the storm.`):s.phase==='storm'?'The wave is here.':s.phase==='debrief'?s.lastResult.quality==='great'?'Great timing. Choose the next task.':'Wave complete. Choose the next task.':s.phase==='report'?'Mission report.':'';
+    this.dialogue.cancel();this.root.innerHTML=html;if(line)this.dialogue.show(this.root.querySelector('[data-dialogue]'),line);
+    $('announcer').textContent=s.paused?'Game paused.':s.phase==='storm'?'The wave is here.':s.phase==='debrief'?'Wave complete. Choose a job.':s.phase==='report'?'Mission report.':'';
     const target=this.root.querySelector(s.phase==='story'?'[data-action="next-story"]':s.phase==='debrief'?'[data-choice="science"]:not(:disabled),[data-choice="charge"]':s.phase==='start'?'[data-action="play"]':'[data-action="ready"],[data-action="resume"],[data-action="replay"]');
     if(target)requestAnimationFrame(()=>target.focus({preventScroll:true}));
-    this.root.querySelector('.card')?.scrollTo(0,0);
   }
-
-  updateHUD() {
-    const s=this.game.state,active=['warning','storm'].includes(s.phase),showHud=active||s.phase==='tutorial'||(s.phase==='story'&&s.storyPanel===2);
-    $('hud').hidden=!showHud;$('mission-tools').hidden=!active;
+  updateHUD(){
+    const s=this.game.state,active=['warning','storm'].includes(s.phase),show=active||['intro','debrief','tutorial'].includes(s.phase)||(s.phase==='story'&&s.storyPanel===2);
+    $('hud').hidden=!show;$('mission-tools').hidden=!show||s.phase==='story';
     for(const name of ['power','air','crew']){
-      const value=number(s[name]),el=$(name+'-meter');$(name+'-value').textContent=value;$(name+'-fill').style.width=`${s[name]}%`;el.querySelector('[role="progressbar"]').setAttribute('aria-valuenow',value);el.classList.toggle('low',s[name]<25);
-      if(value<this.previousMeters[name]-1){el.classList.remove('dropped');void el.offsetWidth;el.classList.add('dropped');}
-      this.previousMeters[name]=value;
+      const value=number(s[name]),el=$(name+'-meter');$(name+'-value').textContent=value;$(name+'-fill').style.width=`${s[name]}%`;el.querySelector('[role="progressbar"]').setAttribute('aria-valuenow',value);el.classList.toggle('low',s[name]<(name==='power'?20:25));
+      if(value<this.previousMeters[name]&&performance.now()-(this.lastFlash[name]||0)>650){this.lastFlash[name]=performance.now();el.classList.remove('dropped');void el.offsetWidth;el.classList.add('dropped');}this.previousMeters[name]=value;
     }
     $('power-meter').classList.toggle('draining',s.shield);
-    $('stars-label').textContent=`⭐ ${s.stars}`;$('storm-count').textContent=s.practice?'Practice':`${s.index+1} / ${s.run.length}`;
-    $('storm-tag').hidden=!active;$('storm-tag').classList.toggle('practice',s.practice);
-    $('storm-tag').textContent=s.practice?'Practice wave · the crew is safe':`☀️ ${eventDate(this.game.event)} · ${Math.round(this.game.event.speedKmS)} km/s`;
-    $('countdown').hidden=!active||s.paused;
-    $('countdown-value').textContent=s.phase==='warning'?Math.ceil(this.game.warningRemaining):s.shield?'🛡️':'☀️';
-    $('countdown-caption').textContent=s.phase==='warning'?'game seconds away':s.shield?'Keep the crew covered':'The wave is here!';
-    this.shieldButton.hidden=!active||s.paused;
-    const practiceLocked=s.practice&&s.phase==='warning'&&this.game.warningRemaining>CONFIG.practiceButtonUnlockSeconds;
-    this.shieldButton.disabled=practiceLocked;
-    this.shieldButton.classList.toggle('on',s.shield);this.shieldButton.classList.toggle('exhausted',s.exhausted);
-    this.shieldButton.setAttribute('aria-pressed',String(s.shield));
-    $('shield-label').textContent=s.exhausted?'Empty! Let go.':s.shield?'Shield on!':this.actions.getTap()?'Tap for shield':'Hold for shield';
-    $('shield-hint').textContent=s.exhausted?'Release, then wait for some power.':s.shield?(this.actions.getTap()?'Tap again when the wave is gone.':'Let go when the wave is gone.'):(this.actions.getTap()?'Tap again to switch it off.':'or hold the space bar');
-    $('practice-hint').hidden=!(active&&s.practice&&!s.paused);
-    $('practice-hint').textContent=practiceLocked?'Wait for it…':s.phase==='warning'?'Now! Hold it!':s.shield?'Keep holding…':'Raise your shield!';
-    const low=active&&!s.practice&&s.power<CONFIG.airPowerReserve;
-    $('reserve-hint').hidden=!low;
-    $('reserve-hint').textContent='Air needs 20 power. Let go to recharge.';
+    if(this.shownStars!==s.stars){$('stars-label').innerHTML=`${icon('star','',18)} <span>${s.stars}</span>`;this.shownStars=s.stars;}
+    $('storm-count').textContent=s.practice?'Practice':`${s.index+1} / 8`;$('pause-button').hidden=!active;
+    if(this.shownSound!==this.audio.enabled){$('sound-button').innerHTML=icon(this.audio.enabled?'sound':'muted','',20);$('sound-button').setAttribute('aria-label',this.audio.enabled?'Mute audio':'Enable audio');$('sound-button').setAttribute('aria-pressed',String(this.audio.enabled));this.shownSound=this.audio.enabled;}
+    $('storm-tag').hidden=!active;$('storm-tag').textContent=s.practice?'Practice · crew safe':`${eventDate(this.game.event)} · ${Math.round(this.game.event.speedKmS)} km/s`;
+    $('countdown').hidden=!active||s.paused;$('countdown-value').textContent=s.phase==='warning'?Math.ceil(this.game.warningRemaining):s.shield?'Safe':'Shield!';$('countdown-caption').textContent=s.phase==='warning'?'until arrival':'wave passing';$('countdown').classList.toggle('urgent',s.phase==='warning'&&this.game.warningRemaining<=3);
+    this.shieldButton.hidden=!active||s.paused;const locked=s.practice&&s.phase==='warning'&&this.game.warningRemaining>CONFIG.practiceButtonUnlockSeconds;
+    this.shieldButton.disabled=locked;this.shieldButton.classList.toggle('on',s.shield);this.shieldButton.classList.toggle('exhausted',s.exhausted);this.shieldButton.setAttribute('aria-pressed',String(s.shield));
+    $('shield-label').textContent=s.exhausted?'Let go. Recharge.':s.shield?'Shield up':this.actions.getTap()?'Tap to shield':'Hold to shield';
+    $('shield-hint').textContent=s.exhausted?'Battery empty':s.shield?(this.actions.getTap()?'Tap when the wave passes':'Let go when it passes'):this.actions.getTap()?'Tap again to lower':'Space also works';
+    $('practice-hint').hidden=!(active&&s.practice&&!s.paused);$('practice-hint').textContent=locked?'Wait for it…':s.phase==='warning'?'Now. Hold!':'Keep it up.';
+    $('reserve-hint').hidden=!(active&&!s.practice&&s.power<CONFIG.airPowerReserve);
   }
 }

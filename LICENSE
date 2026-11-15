@@ -20,6 +20,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-This license covers the original game code and artwork. NASA DONKI records
+This license covers the original game code, artwork and audio. The bundled
+Nunito font retains the SIL Open Font License in assets/Nunito-OFL.txt.
+NASA DONKI records
 are supplied source data credited separately in README.md, not original
 Storm Waves authorship. No NASA endorsement is claimed.

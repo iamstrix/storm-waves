@@ -1,6 +1,6 @@
 /* AI assistance: Codex wrote this original game model from Claude Code's design/spec. */
-import { CONFIG, clamp, warningSeconds, stormSeconds } from './config.js';
-import { buildRun } from './data.js';
+import { CONFIG, clamp, warningSeconds, stormSeconds } from './config.js?v=2';
+import { buildRun } from './data.js?v=2';
 
 export class StormGame {
   constructor(events, { random = Math.random } = {}) {

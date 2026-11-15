@@ -22,8 +22,10 @@ runtime AI service is required. All game assets and the saved storm data are loc
 - **Tap mode** lets you tap once to raise the shield and again to lower it.
 - Cards pause the mission. **Space** cycles choices; **Enter** confirms a focused
   button. Tab navigation also works. **Escape** pauses or resumes an active wave.
-- **Read to me** uses the browser's speech support when available. Voices depend
-  on the device; the game selects a local voice when possible.
+- Pip's short lines type onto the screen with soft character blips. Tap a line
+  to reveal it immediately. No computer speech or borrowed Undertale audio is used.
+- Original ambient music and sound effects start after your first interaction.
+  The speaker button mutes everything; the preference stays on this device.
 
 First play includes Pip's four-panel story and a safe practice wave. Practice
 does not count toward the eight storms, and supplies reset afterward. Replay
@@ -67,8 +69,9 @@ Storm speed maps to a 4–9-second warning. Angular half-width maps to a
 encounter and 6 for a glancing one. All tuning is in `src/config.js`.
 
 Large buttons, text and numeric meter labels, scrolling phone cards, visible
-keyboard focus, optional speech, hold/tap input, reduced-motion support, and
+keyboard focus, screen-reader text, hold/tap input, reduced-motion support, and
 automatic pause on tab switching are included. Pausing always releases the shield.
+Reduced motion reveals complete dialogue immediately and freezes ambient motion.
 
 ## NASA data and scientific limits
 
@@ -98,16 +101,24 @@ development. No NASA logo or endorsement is used.
 
 ## Implementation and AI assistance
 
-Original vanilla JavaScript ES modules, Canvas 2D artwork, HTML and CSS. No
-framework, remote font, analytics, external art pack, or runtime API dependency.
+Original vanilla JavaScript ES modules, Canvas 2D artwork, HTML and CSS. Web Audio
+synthesizes an original ambient chord progression, bell melody, character blips,
+shield hum, wave sounds, and feedback chimes. No framework, analytics, external
+art pack, or runtime API dependency. The sun's corona, dust, reflections, robot
+expressions, and shield impacts are drawn procedurally.
+
+The locally bundled **Nunito** font is by the Nunito Project Authors, distributed
+under the SIL Open Font License in `assets/Nunito-OFL.txt`.
+[Font source](https://github.com/google/fonts/tree/main/ofl/nunito).
 
 **Claude Code assisted the concept, design specification and visual mockups.
 OpenAI Codex assisted implementation, original procedural artwork,
-documentation and testing.** AI was used during development; the delivered game
+audio composition, documentation and testing.** AI was used during development; the delivered game
 does not call an AI model. NASA remains the source of the archived storm data.
 People publishing or submitting this project should review the work and disclose
 this assistance in the submission form.
 
-Original game code and artwork: MIT license. NASA source data is credited above.
+Original game code, artwork and audio: MIT license. Nunito retains its OFL license.
+NASA source data is credited above.
 The public repository is restricted to this game folder; private idea-bank files,
 planning references, research outputs and raw exports are excluded.

@@ -36,7 +36,6 @@ export const CONFIG = Object.freeze({
   comparisonDistanceKm: 960,
   pilotStars: 3,
   commanderStars: 6,
-  speechRate: 0.95,
   capturedLabel: '15 Nov 2026',
   donkiUrl: 'https://ccmc.gsfc.nasa.gov/tools/DONKI/',
 });

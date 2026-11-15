@@ -51,8 +51,9 @@ use. A report links back to the eight NASA event records.
 Pip, an original robot character, introduces the mission in four short panels.
 A safe practice round teaches the meters and shield timing before supplies reset
 for the real mission. Tap mode provides an alternative to holding; Space and
-Enter support keyboard play. Cards pause time, speech can read the text, and
-phone cards scroll. Replay selects a different eight-event window.
+Enter support keyboard play. Cards pause time, short dialogue types with soft
+letter sounds, and phone cards scroll when needed. Original ambient music and
+effects bring the world to life. Replay selects a different eight-event window.
 
 The prototype uses original JavaScript ES modules, Canvas 2D artwork, HTML and
 CSS, hosted statically on GitHub Pages. Its archive loads locally with the game:
@@ -71,7 +72,9 @@ units. These distinctions appear inside the game and in the README.
 
 Yes. Claude Code assisted brainstorming/concept development, the design
 specification, and visual mockups. OpenAI Codex assisted the original game
-implementation, procedural Canvas artwork, documentation, and automated tests.
+implementation, procedural Canvas artwork, original synthesized music and sound
+effects, documentation, and automated tests. The music and effects are generated
+by game code; no borrowed soundtrack or computer-spoken dialogue is used.
 Development assistance is disclosed in source comments, the README, the game's
 Science & Data panel, and the demo watermark. The delivered game does not call
 an SI model. NASA storm values are supplied archived source records, not
@@ -105,10 +108,13 @@ and procedural visuals were developed for this project with the SI assistance
 described above. No stock art, human likenesses, third-party game engine, or NASA
 logo is included.
 
-Development tools: vanilla JavaScript, HTML, CSS, browser Canvas 2D and Web Speech
+Development tools: vanilla JavaScript, HTML, CSS, browser Canvas 2D and Web Audio
 APIs, Node.js's built-in HTTP server and test runner, Playwright/Chromium for
 automated browser checks and screen capture, Git, and GitHub Pages hosting.
 The delivered application has no third-party runtime library dependency.
+
+Nunito font: the Nunito Project Authors, SIL Open Font License 1.1. Bundled
+locally with its license. Source: https://github.com/google/fonts/tree/main/ofl/nunito
 
 Original code and artwork use the MIT license; NASA source data remains
 separately attributed. Source files, license, instructions, and scientific
