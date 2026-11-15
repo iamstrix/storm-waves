@@ -1,0 +1,13 @@
+# Keep the public repository limited to the playable game and its documentation.
+node_modules/
+tmp/
+.env
+.env.*
+.DS_Store
+Thumbs.db
+PLAN.md
+mockups.html
+AUDIT.html
+data/raw/
+data/gst-snapshot.json
+

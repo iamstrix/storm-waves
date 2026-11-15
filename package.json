@@ -1,0 +1,12 @@
+{
+  "name": "storm-waves",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A one-button NASA-data mission trainer about protection, power, and science.",
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "test": "node --test tests/game.test.mjs"
+  },
+  "license": "MIT"
+}
