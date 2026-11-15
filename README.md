@@ -4,7 +4,10 @@ Keep a Mars crew safe through eight real Sun storms. Time a shield, protect the
 shared battery, and choose between science, rest, and charging.
 
 **[Play Storm Waves](https://iamstrix.github.io/storm-waves/)** ·
+[Short gameplay demo](https://iamstrix.github.io/storm-waves/demo.html) ·
 [Source code](https://github.com/iamstrix/storm-waves)
+
+Copy-ready text for the eight submission fields is in [SUBMISSION.md](SUBMISSION.md).
 
 A browser mission trainer designed for ages 7–12, for the **Build a Junior
 Astronaut Mission Trainer** challenge. No account, installation, backend, or
