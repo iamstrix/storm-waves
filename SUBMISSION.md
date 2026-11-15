@@ -40,8 +40,9 @@ Claude Code (Anthropic) helped research the challenge and NASA data, suggested w
 
 | Link Text | Link Url |
 |---|---|
-| NASA CCMC DONKI – Space Weather Database Of Notifications, Knowledge, Information | https://ccmc.gsfc.nasa.gov/tools/DONKI/ |
-| NASA Open APIs – DONKI CME data (archive saved 15 Nov 2026) | https://api.nasa.gov/ |
+| NASA DONKI coronal mass ejection data, 17 Sep to 15 Nov 2026 (NASA Open APIs) | https://api.nasa.gov/DONKI/CME?startDate=2026-09-17&endDate=2026-11-15&api_key=DEMO_KEY |
+| Archived NASA DONKI snapshot used in the game (saved 15 Nov 2026) | https://github.com/iamstrix/storm-waves/blob/main/data/cme-snapshot.json |
+| NASA Open APIs (DONKI documentation) | https://api.nasa.gov/ |
 | NASA Crew Systems reference (radiation shelters) | https://www.nasa.gov/reference/crew-systems/ |
 
 ## Space Agency Partner & Other Data
