@@ -1,8 +1,6 @@
 # Sunblock: Shield Your Base From Sun Storms!
 
 
-*Working title: Storm Waves (kept in the URL and repository name).*
-
 Keep a Mars crew safe through eight real Sun storms. Time a shield, protect the
 shared battery, and choose between science, rest, and charging.
 

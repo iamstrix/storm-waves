@@ -1,10 +1,10 @@
 # Sunblock — submission copy
 
-Final text for the Space Apps project form. Working title: Storm Waves.
+Final text for the Space Apps project form.
 
 ## Project Name
 
-Sunblock (Storm Waves)
+Sunblock
 
 ## Summary
 
@@ -20,7 +20,7 @@ https://iamstrix.github.io/storm-waves/
 
 ## Project Details
 
-Sunblock (working title: Storm Waves) is our entry for Build a Junior Astronaut Mission Trainer. Play it at https://iamstrix.github.io/storm-waves/ (source: https://github.com/iamstrix/storm-waves).
+Sunblock is our entry for Build a Junior Astronaut Mission Trainer. Play it at https://iamstrix.github.io/storm-waves/ (source: https://github.com/iamstrix/storm-waves).
 
 How it works: three astronauts live at Red Base on Mars, and solar storms (coronal mass ejections) race toward the base. The player holds one big button, or the space bar, to raise a shield while each storm passes. The shield and the air machine run on the same battery, and air needs at least 20 power, so shielding longer than needed puts the crew's air at risk. Between storms, the player reads a forecast of the next storm and picks one job: do science (earns a star, costs power), rest the crew (heals the crew, costs power), or charge up (gains power, earns no star). The goal is to get through 8 storms with as many stars as possible.
 
@@ -48,7 +48,7 @@ Claude Code (Anthropic) helped research the challenge and NASA data, suggested w
 
 | Link Text | Link Url |
 |---|---|
-| Sunblock / Storm Waves source code (MIT) | https://github.com/iamstrix/storm-waves |
+| Sunblock source code (MIT) | https://github.com/iamstrix/storm-waves |
 | Nunito font, SIL Open Font License 1.1 | https://github.com/google/fonts/tree/main/ofl/nunito |
 | Claude Code (Anthropic), design and spec assistance | https://claude.com/claude-code |
 | OpenAI Codex, implementation assistance | https://openai.com/codex/ |
