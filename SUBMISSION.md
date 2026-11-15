@@ -4,7 +4,7 @@ Final text for the Space Apps project form.
 
 ## Project Name
 
-Sunblock
+Sunblock - Shield Your Base From Sun Storms!
 
 ## Summary
 
