@@ -1,5 +1,5 @@
 /* AI assistance: original Codex procedural space, solar corona, Martian terrain, and dust. */
-import {disc,oval} from './art.js?v=2';
+import {disc,oval} from './art.js?v=3';
 const random = n => {const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value);};
 
 export function makeSky(w,h,ratio){

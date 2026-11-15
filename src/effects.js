@@ -1,22 +1,48 @@
 /* AI assistance: original Codex shield, wave, timing, and impact effects. */
-import {disc,oval} from './art.js?v=2';
-import {clamp} from './config.js?v=2';
+import {disc,oval} from './art.js?v=3';
+import {clamp} from './config.js?v=3';
+
+export function waveGeometry(game,sunX,sunY,baseX,baseY,scale,width){
+  const warning=game.state.phase==='warning';
+  const progress=clamp(game.state.phaseTime/(warning?game.warningDuration:game.stormDuration),0,1);
+  const depth=warning?progress*progress:1+progress*1.45;
+  const impactWidth=Math.min(width*.7,(220+game.event.halfAngleDeg*2.5)*scale);
+  return {warning,progress,x:warning?sunX+(baseX-sunX)*progress:baseX,
+    y:warning?sunY+(baseY-138*scale-sunY)*progress:baseY-138*scale+progress*285*scale,
+    halfWidth:12+impactWidth*depth,rise:(18+impactWidth*.18)*Math.min(1.6,depth),
+    fade:warning?Math.min(1,.25+progress):1-clamp((progress-.72)/.28,0,1)};
+}
 
 export function storm(c,game,sunX,sunY,baseX,baseY,scale,time){
-  const s=game.state,distance=Math.hypot(baseX-sunX,baseY-sunY),angle=Math.atan2(baseY-sunY,baseX-sunX);
-  const warning=s.phase==='warning',progress=warning?clamp(s.phaseTime/game.warningDuration,0,1):clamp(s.phaseTime/game.stormDuration,0,1);
-  const radius=distance*(warning?.08+.92*progress:1+progress*.23),spread=.19+game.event.halfAngleDeg*.005;
-  c.save();c.lineCap='round';
-  for(let i=5;i>=0;i--){
-    c.strokeStyle=['#ffdc94','#ffc174b0','#ffac624d','#ff9d5426','#ff9d5415','#ff9d5409'][i];
-    c.lineWidth=(i?3+i*2:3)*Math.max(.65,scale);c.beginPath();c.arc(sunX,sunY,Math.max(3,radius-i*7*scale),angle-spread,angle+spread);c.stroke();
+  const g=waveGeometry(game,sunX,sunY,baseX,baseY,scale,c.canvas.width/(c.getTransform().a||1));
+  const {x,y,halfWidth:width,rise,progress,warning,fade}=g;
+  c.save();c.globalAlpha=fade;c.lineCap='round';
+  // The incoming front sits above the habitat; during impact it sweeps IN FRONT.
+  // The shield rejects the wave at its outer surface instead of letting it cross the crew.
+  if(game.state.shield){
+    c.beginPath();c.rect(-5000,-5000,10000,10000);
+    c.moveTo(baseX-147*scale,baseY+5*scale);
+    c.ellipse(baseX,baseY+5*scale,147*scale,137*scale,0,Math.PI,Math.PI*2);
+    c.closePath();c.clip('evenodd');
   }
-  for(let i=0;i<30;i++){
-    const a=angle+Math.sin(i*2.399+time*.1)*spread,r=radius-(i%7)*6*scale;
-    const px=sunX+Math.cos(a)*r,py=sunY+Math.sin(a)*r;c.globalAlpha=.3+(i%4)*.16;
-    c.strokeStyle='#ffe3a1';c.lineWidth=(.8+(i%3)*.4)*scale;c.beginPath();c.moveTo(px-Math.cos(a)*6*scale,py-Math.sin(a)*6*scale);c.lineTo(px,py);c.stroke();
+  const front=(offset=0)=>{c.beginPath();c.moveTo(x-width,y-rise+offset);c.bezierCurveTo(x-width*.64,y+rise*.35+offset,x+width*.64,y+rise*.35+offset,x+width,y-rise+offset);};
+  // A luminous, deep curtain and several trailing fronts create perspective.
+  const heat=c.createLinearGradient(0,y-rise-75*scale,0,y+12*scale);
+  heat.addColorStop(0,'#ff763000');heat.addColorStop(.65,'#ff8a3820');heat.addColorStop(1,'#ffc66b55');
+  front();c.lineTo(x+width,y-rise-60*scale);c.bezierCurveTo(x+width*.6,y-65*scale,x-width*.6,y-65*scale,x-width,y-rise-60*scale);c.closePath();c.fillStyle=heat;c.fill();
+  for(let i=4;i>=0;i--){
+    front(-i*(7+progress*5)*scale);c.strokeStyle=['#fff1bb','#ffd285b8','#ffaf655c','#ff863530','#ff763015'][i];
+    c.lineWidth=(i?4+i*3:3.2+progress*2.3)*Math.max(.65,scale);
+    c.shadowColor='#ff9f43';c.shadowBlur=i===0?18:0;c.stroke();
   }
-  c.globalAlpha=1;c.restore();
+  c.shadowBlur=0;
+  for(let i=0;i<38;i++){
+    const u=(Math.sin(i*2.399+time*.12)+1)/2,px=x+(u*2-1)*width;
+    const py=y-rise+4*rise*u*(1-u),trail=(5+i%5*3)*(warning?.5+progress:1.5);
+    c.globalAlpha=fade*(.3+(i%4)*.16);c.strokeStyle=i%3?'#ffd68b':'#fff2bd';c.lineWidth=(1+i%3*.4)*Math.max(.6,scale);
+    c.beginPath();c.moveTo(px-(u-.5)*trail,py-trail*scale);c.lineTo(px,py);c.stroke();
+  }
+  c.restore();
 }
 
 export function timing(c,x,y,scale,remaining){

@@ -1,8 +1,8 @@
 /* AI assistance: original Codex scene composition, animation, and camera for the user's revised art direction. */
-import {clamp} from './config.js?v=2';
-import {disc,oval,habitat,pip} from './art.js?v=2';
-import {makeSky,drawSun,drawTerrain,drawMoon} from './world.js?v=2';
-import {storm,shield,timing} from './effects.js?v=2';
+import {clamp} from './config.js?v=3';
+import {disc,oval,habitat,pip} from './art.js?v=3';
+import {makeSky,drawSun,drawTerrain,drawMoon} from './world.js?v=3';
+import {storm,shield,timing} from './effects.js?v=3';
 
 export class SceneRenderer{
   constructor(canvas){
@@ -42,12 +42,12 @@ export class SceneRenderer{
     c.save();if(motion&&s.phase==='storm'&&!s.shield){c.translate(Math.sin(t*37)*1.1,Math.cos(t*31)*.7);}
     drawTerrain(c,w,h,p.horizon,t);
     if(s.phase==='warning')timing(c,p.x,p.y,p.scale,game.warningRemaining);
-    if(['warning','storm'].includes(s.phase))storm(c,game,sunX,sunY,p.x,p.y,p.scale,t);
     habitat(c,p.x,p.y,p.scale,t,s.power);
     if(s.shield&&!this.lastShield)this.shieldAt=clock;this.lastShield=s.shield;
-    if(s.shield||(s.phase==='story'&&s.storyPanel===2))shield(c,p.x,p.y,p.scale,t,s.phase==='storm',motion?Math.min(1,(clock-this.shieldAt)/220+.1):1);
     const bigPip=target.story,pipX=bigPip?(target.mobile?w*.32:w*.2):p.x+135*p.scale,pipY=bigPip?p.y+24*p.scale:p.y+17*p.scale;
     pip(c,pipX,pipY,bigPip?Math.min(target.mobile?1.35:1.8,p.scale*1.75):p.scale*.64,t,{talking:presentation.talking,happy:s.phase!=='storm'||s.shield});
+    if(['warning','storm'].includes(s.phase))storm(c,game,sunX,sunY,p.x,p.y,p.scale,t);
+    if(s.shield||(s.phase==='story'&&s.storyPanel===2))shield(c,p.x,p.y,p.scale,t,s.phase==='storm',motion?Math.min(1,(clock-this.shieldAt)/220+.1):1);
     if(s.phase==='report'&&s.outcome==='won')for(let i=0;i<10;i++){
       const phase=(t*.18+i*.137)%1,x=p.x+Math.sin(i*2.3)*120*p.scale,y=p.y-80*p.scale-phase*135*p.scale;
       c.globalAlpha=Math.sin(phase*Math.PI)*.6;disc(c,x,y,1.5,i%2?'#f8cf90':'#a6eac9');

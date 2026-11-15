@@ -1,5 +1,5 @@
 /* AI assistance: Codex implementation of Claude Code's spec; NASA DONKI records are supplied data. */
-import { CONFIG, warningSeconds, stormSeconds } from './config.js?v=2';
+import { CONFIG, warningSeconds, stormSeconds } from './config.js?v=3';
 
 export function prepareEvents(snapshot) {
   if (!Array.isArray(snapshot?.events)) throw new Error('The saved storm data could not be read.');

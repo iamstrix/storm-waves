@@ -1,10 +1,10 @@
 /* AI assistance: Codex implemented this original game from Claude Code's design/spec. */
-import { CONFIG } from './config.js?v=2';
-import { loadEvents } from './data.js?v=2';
-import { StormGame } from './game.js?v=2';
-import { SceneRenderer } from './render.js?v=2';
-import { GameUI } from './ui.js?v=2';
-import { SpaceAudio } from './audio.js?v=2';
+import { CONFIG } from './config.js?v=3';
+import { loadEvents } from './data.js?v=3';
+import { StormGame } from './game.js?v=3';
+import { SceneRenderer } from './render.js?v=3';
+import { GameUI } from './ui.js?v=3';
+import { SpaceAudio } from './audio.js?v=3';
 
 const readStorage = (key, fallback) => { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } };
 const writeStorage = (key, value) => { try { localStorage.setItem(key, value); } catch { /* The game also works without storage. */ } };

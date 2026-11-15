@@ -1,8 +1,8 @@
 /* AI assistance: Codex UI implementation; initial Claude Code spec, revised by the user's simplicity and sound direction. */
-import { CONFIG } from './config.js?v=2';
-import { eventDate, travelDays, speedLabel, sizeLabel, protectionCost, encounterLabel } from './data.js?v=2';
-import { icon } from './icons.js?v=2';
-import { Dialogue } from './dialogue.js?v=2';
+import { CONFIG } from './config.js?v=3';
+import { eventDate, travelDays, speedLabel, sizeLabel, protectionCost, encounterLabel } from './data.js?v=3';
+import { icon } from './icons.js?v=3';
+import { Dialogue } from './dialogue.js?v=3';
 const escape = value => String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 const number = value => Math.max(0, Math.round(value));
 const $ = id => document.getElementById(id);
