@@ -3,7 +3,7 @@ import { CONFIG } from './config.js?v=3';
 import { loadEvents } from './data.js?v=3';
 import { StormGame } from './game.js?v=3';
 import { SceneRenderer } from './render.js?v=3';
-import { GameUI } from './ui.js?v=3';
+import { GameUI } from './ui.js?v=4';
 import { SpaceAudio } from './audio.js?v=3';
 
 const readStorage = (key, fallback) => { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } };

@@ -1,9 +1,12 @@
-# Storm Waves
+# Sunblock: Shield Your Base From Sun Storms!
+
+
+*Working title: Storm Waves (kept in the URL and repository name).*
 
 Keep a Mars crew safe through eight real Sun storms. Time a shield, protect the
 shared battery, and choose between science, rest, and charging.
 
-**[Play Storm Waves](https://iamstrix.github.io/storm-waves/)** ·
+**[Play Sunblock](https://iamstrix.github.io/storm-waves/)** ·
 [Short gameplay demo](https://iamstrix.github.io/storm-waves/demo.html) ·
 [Source code](https://github.com/iamstrix/storm-waves)
 

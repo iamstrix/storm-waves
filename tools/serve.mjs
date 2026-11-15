@@ -25,5 +25,5 @@ const server=http.createServer(async(req,res)=>{
     res.writeHead(200,{...headers,'Content-Length':data.length});res.end(req.method==='HEAD'?undefined:data);
   }catch{res.writeHead(404,{'Content-Type':'text/plain'});res.end('Not found');}
 });
-server.listen(port,'127.0.0.1',()=>console.log(`Storm Waves: http://127.0.0.1:${port}/`));
+server.listen(port,'127.0.0.1',()=>console.log(`Sunblock: http://127.0.0.1:${port}/`));
 process.on('SIGINT',()=>server.close(()=>process.exit(0)));
